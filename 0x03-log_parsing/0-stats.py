@@ -1,69 +1,35 @@
 #!/usr/bin/python3
-""" read stdin line by line and computer metrics
-"""
+"""log parsing"""
 import sys
-import re
-import signal
-from collections import OrderedDict
 
 
-def search_items(line, s):
-    """ search items to position"""
-    regexu = r"\s\d{3}\s\d{1,}"
-    txt = re.search(regexu, line)
-    word = txt.group()
-    word = word[1:]
+def print_data(total_file_size, status_code_data):
+    """prints total size and status code count"""
+    print('File size: {}'.format(total_file_size))
+    for k, v in sorted(status_code_data.items()):
+        if v != 0:
+            print('{}: {}'.format(k, v))
 
-    regexd = r"\d{3}\s"
-    left = re.search(regexd, word)
 
-    code = left.group()
-    code = code[:-1]
-
-    regext = r"\s\d{1,}"
-    right = re.search(regext, word)
-
-    size = right.group()
-    size = size[1:]
-    size = int(size)
-
-    add_code(code, s)
-
-    return size
-
-def add_code(code, codes):
-    """count the status code"""
-    try:
-        codes[code] += 1
-    except KeyError:
-        pass
-
-def print_all(stat):
-    """ Print all """
-    stat = OrderedDict(stat)
-
-    for key, values in stat.items():
-        if value is not 0:
-            print("{}: {}".format(key, value))
-
-if __name__ == "__main_":
-    status = {"200":0, "301":0, "400":0, "401":0,
-            "403":0, "404":0,"405":0,"500":0}
-    file_size = 0
-    i = 0
-
-    try:
-        for lines in sys.stdin:
-            file_size += search_items(lines, status)
-
-            if i is not 0 and i % 9 == 0:
-                print("Files size: {:d}".format(file_size))
-                print_all(status)
-
-            i += 1
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print("File size: {:d}".format(file_size))
-        print_all(status)
-        sys.exit(0)
+status_codes = ['200', '301', '400', '401', '403', '404', '405', '500']
+status_code_data = {code: 0 for code in status_codes}
+total_file_size = 0
+try:
+    count = 0
+    for line in sys.stdin:
+        splitstr = line.split()
+        try:
+            total_file_size += int(splitstr[-1])
+            code = splitstr[-2]
+            if code in status_code_data:
+                count += 1
+                status_code_data[code] += 1
+                if count % 10 == 0:
+                    print_data(total_file_size, status_code_data)
+        except:
+            pass
+except KeyboardInterrupt:
+    print_data(total_file_size, status_code_data)
+    raise
+else:
+    print_data(total_file_size, status_code_data)
