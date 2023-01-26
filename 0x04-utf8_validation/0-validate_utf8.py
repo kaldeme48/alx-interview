@@ -1,64 +1,36 @@
 #!/usr/bin/python3
-""" Module for UTF8_data class """
+""" determines if a given data set represents a valid UTF-8 encoding """
 
 
-def to_bin(number):
-    """ Function to convert a base 10 to binary
-    Arg:
-        number (int) - number
-    Return:
-         (str)
-    """
-    binary = bin(number).replace('0b', '')
-    binary = '0' * (8 - len(binary)) + binary
-    return binary
+def validUTF8(data):
+    # checks if most significant byte is 1
+    mask1 = 1 << 7
+    # checks if second most significant byte is 0
+    mask2 = 1 << 6
+    # keeps track of how many 1s before 0 occurs
+    n_bytes = 0
 
+    if not data or len(data) == 0:
+        return True
 
-def validUTF8(data_set):
-    """ A function to validate if a data set is a valid utf-8 format
-    '00000000' == 0
-    '10000000' == 128
-    '11000000' == 192
-    '11100000' == 224
-    '11110000' == 240
-    '11111000' == 248
-    '11111100' == 252
-    '11111110' == 254
-    '11111111' == 255
-    """
-    # print(data_set, '\n', [to_bin(num) for num in data_set])
-    if len(data_set) == 0:
+    for num in data:
+        mask = 1 << 7
+        if n_bytes == 0:
+            while (mask & num):
+                n_bytes += 1
+                mask = mask >> 1
+
+            if n_bytes == 0:
+                continue
+            if n_bytes == 1 or n_bytes > 4:
+                return False
+        else:
+
+            if not (num & mask1 and not (num & mask2)):
+                return False
+        n_bytes -= 1
+
+    if n_bytes:
         return False
-    val = data_set[0]
-    if val > 255:
-        # print('first if\n{} > {}'.format(to_bin(val), to_bin(255)))
-        return False
-    elif val & 128 == 0:
-        # print('second if\n{} & {} = {}'.format(
-        #     to_bin(val), to_bin(128), to_bin(val & 128)))
-        num_of_byte = 1
-    elif val & 224 == 192:
-        # print('third if\n{} & {} = {}'.format(
-        #     to_bin(val), to_bin(224), to_bin(val & 224)))
-        num_of_byte = 2
-    elif val & 240 == 224:
-        # print('fourth if\n{} & {} = {}'.format(
-        #     to_bin(val), to_bin(240), to_bin(val & 240)))
-        num_of_byte = 3
-    elif val & 248 == 240:
-        # print('fifth if\n{} & {} = {}'.format(
-        #     to_bin(val), to_bin(248), to_bin(val & 248)))
-        num_of_byte = 4
     else:
-        # print('last else')
-        return False
-    # print(len(data_set), num_of_byte)
-
-    if len(data_set) < num_of_byte:
-        return False
-
-    for j in range(num_of_byte - 1):
-        # print(to_bin(data_set[j]), to_bin(192), to_bin(128))
-        if data_set[j] & 192 != 128 and data_set[j] > 255:
-            return False
-    return True
+        return True
